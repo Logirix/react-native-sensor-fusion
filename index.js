@@ -9,9 +9,6 @@ const types = [
   'Accelerometer',
   'Magnetometer',
 ]
-  .map(
-    type => Sensors.SensorTypes[type],
-  );
 
 const SensorFusionContext = React
   .createContext(
