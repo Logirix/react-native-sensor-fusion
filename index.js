@@ -25,8 +25,11 @@ const createFilters = () => types
     ),
   );
 
+let latestSampleInterval = 60
+
 const SensorFusionProvider = ({ children, ...extraProps }) => {
   const { sampleInterval } = extraProps;
+  latestSampleInterval = sampleInterval
   const [ ahrs, setAhrs ] = useState(
     new Ahrs(extraProps),
   );
@@ -61,14 +64,16 @@ const SensorFusionProvider = ({ children, ...extraProps }) => {
     Object.keys(extraProps),
   );
   useEffect(
-    () => types
-      .map(
+    () => {
+      latestSampleInterval = sampleInterval
+      return types.map(
         type => Sensors.setUpdateIntervalForType(
           type,
           (1000 / sampleInterval),
         ),
       )
-      .reduce(() => undefined),
+      .reduce(() => undefined)
+    },
     [ sampleInterval ],
   );
   useEffect(
@@ -98,6 +103,9 @@ const SensorFusionProvider = ({ children, ...extraProps }) => {
                     },
                   );
                 }
+              },
+              (error) => {
+                // ignore this and use unsupportedSensors instead to check for sensors availability
               }
             ),
         );
@@ -145,5 +153,26 @@ export const useCompass = () => {
     ),
   );
 };
+
+export const unsupportedSensors = async () => {
+  const promises = []
+  for (let i = 0; i < types.length; i++) {
+    const sensorName = types[i];
+    promises.push(new Promise((resolve) => {
+      Sensors.setUpdateIntervalForType(sensorName, 10)
+      const subs = Sensors[sensorName].subscribe(
+      () => {
+        subs.unsubscribe()
+        resolve(true)
+      },
+      () => {
+        Sensors.setUpdateIntervalForType(sensorName, 1000 / latestSampleInterval)
+        resolve(false)
+      })
+    }))
+  }
+  const results = await Promise.all(promises)
+  return types.filter((_, i) => !results[i])
+}
 
 export default SensorFusionProvider;
