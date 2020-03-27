@@ -110,7 +110,9 @@ const SensorFusionProvider = ({ children, ...extraProps }) => {
             ),
         );
       return () => subscriptions
-        .map(({ unsubscribe }) => unsubscribe());
+        .map((data) => {
+          if (data) data.unsubscribe()
+        });
     },
     [],
   );
