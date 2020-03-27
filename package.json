@@ -2,7 +2,7 @@
   "dependencies": {
     "ahrs": "^1.2.2",
     "kalmanjs": "^1.1.0",
-    "react-native-sensors": "^5.3.2"
+    "expo-sensors": "^8.1.0"
   },
   "name": "react-native-sensor-fusion",
   "version": "0.0.4",

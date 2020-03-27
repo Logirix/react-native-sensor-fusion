@@ -1,13 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import * as Sensors from 'react-native-sensors';
+import * as Sensors from 'expo-sensors';
 import Ahrs from 'ahrs';
 import KalmanFilter from 'kalmanjs';
 
 const types = [
-  'gyroscope',
-  'accelerometer',
-  'magnetometer',
+  'Gyroscope',
+  'Accelerometer',
+  'Magnetometer',
 ]
   .map(
     type => Sensors.SensorTypes[type],
@@ -63,8 +63,7 @@ const SensorFusionProvider = ({ children, ...extraProps }) => {
   useEffect(
     () => types
       .map(
-        type => Sensors.setUpdateIntervalForType(
-          type,
+        type => Sensors[type].setUpdateInterval(
           (1000 / sampleInterval),
         ),
       )
@@ -76,7 +75,7 @@ const SensorFusionProvider = ({ children, ...extraProps }) => {
       const subscriptions = types
         .map(
           (type, i) => Sensors[type]
-            .subscribe(
+            .addListener(
               ({ x, y, z }) => {
                 [ x, y, z ]
                   .map(
@@ -102,7 +101,7 @@ const SensorFusionProvider = ({ children, ...extraProps }) => {
             ),
         );
       return () => subscriptions
-        .map(({ unsubscribe }) => unsubscribe());
+        .map(({ remove }) => remove());
     },
     [],
   );
@@ -145,5 +144,14 @@ export const useCompass = () => {
     ),
   );
 };
+
+export const unsupportedSensors = async () => {
+  const sensorsNotAvailable = []
+  for (let i = 0; i < types.length; i++) {
+    const sensorName = types[i];
+    if (!await Sensors[sensorName].isAvailableAsync()) sensorsNotAvailable.push(type)
+  }
+  return sensorsNotAvailable
+}
 
 export default SensorFusionProvider;
